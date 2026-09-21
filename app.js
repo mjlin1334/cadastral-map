@@ -32,7 +32,7 @@ async function parseZip(ab,kind){const mode=$('#'+kind+'Crs').value;let geo;
    if(sample && (Math.abs(sample[0])>180||Math.abs(sample[1])>90)) reprojectGeo(geo,mode);
    else if(sample && mode!=='4326'){
      // 若 shpjs 已依 .prj 轉成經緯度，但使用者明確指定其他 CRS，需從 ZIP 原始 shp 解析。支援 shp.parseShp 的版本直接強制解析。
-     try{const zip=await JSZip.loadAsync(ab),name=Object.keys(zip.files).find(n=>/\.shp$/i.test(n)&&!zip.files[n].dir);if(name&&shp.parseShp){const raw=await zip.files[name].async('arraybuffer');const geom=shp.parseShp(raw,CRS[mode]);const parts=await zipParts(ab);geo={type:'FeatureCollection',features:geom.map((g,i)=>({type:'Feature',geometry:g,properties:parts.dbf?.rows?.[i]||{}}))};return geo}catch(e){console.warn('force CRS fallback',e)}
+     try{const zip=await JSZip.loadAsync(ab),name=Object.keys(zip.files).find(n=>/\.shp$/i.test(n)&&!zip.files[n].dir);if(name&&shp.parseShp){const raw=await zip.files[name].async('arraybuffer');const geom=shp.parseShp(raw,CRS[mode]);const parts=await zipParts(ab);geo={type:'FeatureCollection',features:geom.map((g,i)=>({type:'Feature',geometry:g,properties:parts.dbf?.rows?.[i]||{}}))};return geo;}}catch(e){console.warn('force CRS fallback',e)}
    }
  }
  return geo;
@@ -57,14 +57,5 @@ $('#parcelFile').onchange=e=>loadZip(e.target.files[0],'parcel');$('#redFile').o
 ['parcel','red','yellow'].forEach(k=>$('#'+k+'Crs').onchange=()=>reloadKind(k));
 $('#panelBtn').onclick=()=>$('#panel').classList.toggle('open');
 if('serviceWorker' in navigator){
-  window.addEventListener('load', async()=>{
-    try{
-      const reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
-      await reg.update();
-      let refreshing=false;
-      navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(refreshing) return; refreshing=true; location.reload();
-      });
-    }catch(e){ console.warn('Service Worker update failed',e); }
-  });
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=10',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
 }

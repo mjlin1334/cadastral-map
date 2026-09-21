@@ -1,36 +1,10 @@
-const CACHE = 'cadastral-v9-20260921';
-const CORE = ['./style.css','./app.js','./manifest.json'];
-self.addEventListener('install', event => {
-  self.skipWaiting();
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
-});
-self.addEventListener('activate', event => {
-  event.waitUntil((async()=>{
-    const keys=await caches.keys();
-    await Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)));
-    await self.clients.claim();
-  })());
-});
-self.addEventListener('fetch', event => {
-  if(event.request.method !== 'GET') return;
-  const req=event.request;
-  const url=new URL(req.url);
-  // Navigation and program files: network first, so GitHub updates appear immediately.
-  if(req.mode==='navigate' || /\/(index\.html|app\.js|style\.css|manifest\.json|sw\.js)$/.test(url.pathname)){
-    event.respondWith((async()=>{
-      try{
-        const fresh=await fetch(req,{cache:'no-store'});
-        if(fresh.ok){ const c=await caches.open(CACHE); c.put(req,fresh.clone()); }
-        return fresh;
-      }catch(e){ return (await caches.match(req)) || (await caches.match('./index.html')); }
-    })());
-    return;
+const CACHE='cadastral-v10-20260921';
+self.addEventListener('install',e=>{self.skipWaiting();});
+self.addEventListener('activate',e=>{e.waitUntil((async()=>{for(const k of await caches.keys())if(k!==CACHE)await caches.delete(k);await self.clients.claim();})());});
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET')return;
+  const u=new URL(e.request.url);
+  if(e.request.mode==='navigate' || u.origin===self.location.origin){
+    e.respondWith((async()=>{try{const r=await fetch(e.request,{cache:'no-store'});if(r.ok){const c=await caches.open(CACHE);c.put(e.request,r.clone());}return r;}catch(err){return (await caches.match(e.request)) || (e.request.mode==='navigate'?caches.match('./index.html'):Response.error());}})());
   }
-  event.respondWith((async()=>{
-    const cached=await caches.match(req);
-    if(cached) return cached;
-    const fresh=await fetch(req);
-    if(fresh.ok && url.origin===location.origin){ const c=await caches.open(CACHE); c.put(req,fresh.clone()); }
-    return fresh;
-  })());
 });
