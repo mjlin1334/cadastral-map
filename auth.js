@@ -6,7 +6,15 @@ const KEY='hetang_cadastral_auth_code_v14';
 function endpoint(){return String(cfg.endpoint||'').replace(/\/$/,'')}
 function ready(){return endpoint() && !endpoint().includes('PASTE_YOUR_')}
 function setMsg(t,ok=false){msg.textContent=t;msg.className=ok?'auth-msg ok':'auth-msg'}
-function unlock(){gate.classList.add('hidden');document.body.classList.remove('auth-locked')}
+function unlock(){
+  // Release focus before hiding the login gate. Older Safari versions can
+  // otherwise retain the visual viewport zoom/offset used for the input.
+  if(code && document.activeElement===code) code.blur();
+  gate.classList.add('hidden');
+  document.body.classList.remove('auth-locked');
+  // Let Leaflet recalculate after the gate is removed / keyboard is dismissed.
+  requestAnimationFrame(()=>requestAnimationFrame(()=>window.dispatchEvent(new Event('resize'))));
+}
 function lock(){gate.classList.remove('hidden');document.body.classList.add('auth-locked')}
 async function validate(v){
   const r=await fetch(endpoint(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:v}),cache:'no-store'});
