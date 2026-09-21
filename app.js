@@ -5,7 +5,28 @@ L.control.layers({'電子地圖':street,'航照影像':aerial},null,{position:'t
 let parcelData=null,parcelLayer=null,redLayer=null,yellowLayer=null,sectionField='',parcelField='',selected=null;
 const $=id=>document.getElementById(id); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(s){$('toast').textContent=s;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2500)}
-async function readShp(file){if(!file)return null; const buf=await file.arrayBuffer(); const g=await shp(buf); return Array.isArray(g)?{type:'FeatureCollection',features:g.flatMap(x=>x.features||[])}:g}
+async function readShp(file){
+  if(!file)return null;
+  let buf=await file.arrayBuffer();
+  // 台灣常見 SHP 的 DBF 為 Big5/CP950，但很多檔案沒有附 .cpg，
+  // shpjs 便可能用錯誤編碼解讀中文欄位。載入前依使用者選擇補上 CPG。
+  try{
+    const zip=await JSZip.loadAsync(buf);
+    const enc=$('dbfEncoding')?.value||'big5';
+    const cpgText=enc==='utf-8'?'UTF-8':'BIG5';
+    const names=Object.keys(zip.files);
+    const dbfs=names.filter(n=>/\.dbf$/i.test(n));
+    for(const dbf of dbfs){
+      const base=dbf.replace(/\.dbf$/i,'');
+      const cpg=base+'.cpg';
+      // 由本工具的編碼選單決定解碼方式；即使原 ZIP 無 CPG 也可正確顯示中文。
+      zip.file(cpg,cpgText);
+    }
+    buf=await zip.generateAsync({type:'arraybuffer',compression:'DEFLATE'});
+  }catch(e){console.warn('CPG encoding patch skipped',e)}
+  const g=await shp(buf);
+  return Array.isArray(g)?{type:'FeatureCollection',features:g.flatMap(x=>x.features||[])}:g
+}
 function allFields(g){const s=new Set();(g.features||[]).forEach(f=>Object.keys(f.properties||{}).forEach(k=>s.add(k)));return [...s]}
 function fillSelect(sel,fields,guess){sel.innerHTML='';fields.forEach(f=>{let o=document.createElement('option');o.value=f;o.textContent=f;sel.appendChild(o)});const hit=fields.find(f=>guess.some(x=>f.toLowerCase().includes(x)));if(hit)sel.value=hit}
 function parcelStyle(){return {color:'#1677b8',weight:1,fillColor:'#4aa3df',fillOpacity:.08}}
