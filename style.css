@@ -45,3 +45,16 @@
    reopening/restoring with the 58px mobile header above the visible area. */
 html{overflow:hidden;overscroll-behavior:none}
 body{overscroll-behavior:none}
+
+
+/* v17.3: fallback layout is dormant unless JS detects a real viewport fault. */
+@media(max-width:720px){
+  html.viewport-repair,html.viewport-repair body{width:100%;max-width:100%;overflow:hidden}
+  html.viewport-repair header{position:fixed;left:var(--app-vv-left,0px);top:var(--app-vv-top,0px);width:var(--app-vv-width,100vw);height:58px;z-index:1500}
+  html.viewport-repair header>div:first-child{min-width:0;flex:1 1 auto;overflow:hidden}
+  html.viewport-repair header b,html.viewport-repair header small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html.viewport-repair .header-actions{flex:0 0 auto}
+  html.viewport-repair main{position:fixed;left:var(--app-vv-left,0px);top:calc(var(--app-vv-top,0px) + 58px);width:var(--app-vv-width,100vw);height:calc(var(--app-vv-height,100vh) - 58px);min-width:0}
+  html.viewport-repair #map{width:100%;min-width:0}
+  html.viewport-repair aside{position:fixed;top:calc(var(--app-vv-top,0px) + 58px);height:calc(var(--app-vv-height,100vh) - 58px)}
+}
