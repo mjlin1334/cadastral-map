@@ -58,5 +58,5 @@ $('#parcelFile').onchange=e=>loadZip(e.target.files[0],'parcel');$('#redFile').o
 ['parcel','red','yellow'].forEach(k=>$('#'+k+'Crs').onchange=()=>reloadKind(k));
 $('#panelBtn').onclick=()=>$('#panel').classList.toggle('open');
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=13',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=14',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
 }
