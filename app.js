@@ -6,7 +6,7 @@ const nlscPhoto=L.tileLayer('https://wmts.nlsc.gov.tw/wmts/PHOTO2/default/Google
 const nlscLabels=L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP2/default/GoogleMapsCompatible/{z}/{y}/{x}.png',{maxZoom:19,attribution:'國土測繪中心'});
 const nlscHybrid=L.layerGroup([nlscPhoto,nlscLabels]);
 L.control.layers({'電子地圖':street,'航照影像':aerial,'航照圖混合':nlscHybrid},null,{position:'topright'}).addTo(map);
-let parcelLayer=null,redLayer=null,yellowLayer=null,parcelGeo=null,sectionField='',parcelField='',selected=null;
+let parcelLayer=null,redLayer=null,yellowLayer=null,parcelGeo=null,sectionField='',parcelField='',selected=null,lockedFeature=null;
 const rawFiles={parcel:null,red:null,yellow:null};
 const styles={parcel:{color:'#1976d2',weight:1.5,fillOpacity:.06},red:{color:'#e53935',weight:4,fillOpacity:0},yellow:{color:'#f2b705',weight:4,fillOpacity:0},selected:{color:'#ff3d00',weight:4,fillColor:'#ff9800',fillOpacity:.25}};
 const CRS={
@@ -44,12 +44,13 @@ function fillFields(fields){for(const id of ['sectionField','parcelField']){cons
 function setLine(geo,kind){const old=kind==='red'?redLayer:yellowLayer;if(old)map.removeLayer(old);const lyr=L.geoJSON(geo,{style:styles[kind]});if(kind==='red')redLayer=lyr;else yellowLayer=lyr;if($('#'+kind+'Toggle').checked)lyr.addTo(map);fitVisible()}
 function cleanSection(v){v=String(v??'').trim();const m=v.match(/([^\s_]+段)$/);return m?m[1]:v.replace(/^段別[_：:]?\s*/,'').trim()}
 function label(f){const p=f.properties||{};return `${cleanSection(p[sectionField])} ${String(p[parcelField]??'').trim()}地號`.trim()}
-function showParcel(f,l){if(!parcelField)return;if(selected&&selected!==l)selected.setStyle(styles.parcel);selected=l;l.setStyle(styles.selected);l.bringToFront();l.bindPopup(`<b>${esc(label(f))}</b>`).openPopup()}
+function showParcel(f,l){if(!parcelField)return;l.bindPopup(`<b>${esc(label(f))}</b>`).openPopup()}
+function lockParcel(f,l){if(!parcelField)return;if(selected&&selected!==l)selected.setStyle(styles.parcel);selected=l;lockedFeature=f;l.setStyle(styles.selected);l.bringToFront();l.bindPopup(`<b>${esc(label(f))}</b>`).openPopup()}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 $('#applyFields').onclick=()=>{sectionField=$('#sectionField').value;parcelField=$('#parcelField').value;$('#searchBox').classList.remove('disabled');toast('欄位已套用')};
 $('#searchBtn').onclick=search;$('#keyword').addEventListener('keydown',e=>{if(e.key==='Enter')search()});
 function search(){if(!parcelGeo||!parcelField)return;const q=$('#keyword').value.trim().toLowerCase(),box=$('#results');box.innerHTML='';if(!q)return;const tokens=q.split(/\s+/).filter(Boolean),hits=parcelGeo.features.filter(f=>{const p=f.properties||{},txt=(cleanSection(p[sectionField])+' '+String(p[parcelField]??'')).toLowerCase();return tokens.every(t=>txt.includes(t))}).slice(0,200);if(!hits.length){box.innerHTML='<div class="hint">查無符合地籍</div>';return}hits.forEach(f=>{const b=document.createElement('button');b.className='result';b.textContent=label(f);b.onclick=()=>focusFeature(f);box.appendChild(b)});if(hits.length===1)focusFeature(hits[0])}
-function focusFeature(f){if(!$('#parcelToggle').checked){$('#parcelToggle').checked=true;parcelLayer.addTo(map)}let target=null;parcelLayer.eachLayer(l=>{if(l.feature===f)target=l});if(target){map.fitBounds(target.getBounds(),{padding:[40,40],maxZoom:19});showParcel(f,target)}}
+function focusFeature(f){if(!$('#parcelToggle').checked){$('#parcelToggle').checked=true;parcelLayer.addTo(map)}let target=null;parcelLayer.eachLayer(l=>{if(l.feature===f)target=l});if(target){map.fitBounds(target.getBounds(),{padding:[40,40],maxZoom:19});lockParcel(f,target)}}
 function toggle(id,layer){const on=$('#'+id).checked;if(!layer)return;if(on)layer.addTo(map);else map.removeLayer(layer)}
 $('#parcelToggle').onchange=()=>toggle('parcelToggle',parcelLayer);$('#redToggle').onchange=()=>toggle('redToggle',redLayer);$('#yellowToggle').onchange=()=>toggle('yellowToggle',yellowLayer);$('#fitAll').onclick=fitVisible;
 function fitVisible(){const g=L.featureGroup([]);[[parcelLayer,'parcelToggle'],[redLayer,'redToggle'],[yellowLayer,'yellowToggle']].forEach(([l,id])=>{if(l&&$('#'+id).checked)l.eachLayer(x=>g.addLayer(x))});if(g.getLayers().length)map.fitBounds(g.getBounds(),{padding:[20,20]})}
@@ -57,5 +58,5 @@ $('#parcelFile').onchange=e=>loadZip(e.target.files[0],'parcel');$('#redFile').o
 ['parcel','red','yellow'].forEach(k=>$('#'+k+'Crs').onchange=()=>reloadKind(k));
 $('#panelBtn').onclick=()=>$('#panel').classList.toggle('open');
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=10',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=13',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
 }
