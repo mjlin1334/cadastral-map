@@ -55,4 +55,16 @@ $('#parcelToggle').onchange=()=>toggle('parcelToggle',parcelLayer);$('#redToggle
 function fitVisible(){const g=L.featureGroup([]);[[parcelLayer,'parcelToggle'],[redLayer,'redToggle'],[yellowLayer,'yellowToggle']].forEach(([l,id])=>{if(l&&$('#'+id).checked)l.eachLayer(x=>g.addLayer(x))});if(g.getLayers().length)map.fitBounds(g.getBounds(),{padding:[20,20]})}
 $('#parcelFile').onchange=e=>loadZip(e.target.files[0],'parcel');$('#redFile').onchange=e=>loadZip(e.target.files[0],'red');$('#yellowFile').onchange=e=>loadZip(e.target.files[0],'yellow');
 ['parcel','red','yellow'].forEach(k=>$('#'+k+'Crs').onchange=()=>reloadKind(k));
-$('#panelBtn').onclick=()=>$('#panel').classList.toggle('open');if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
+$('#panelBtn').onclick=()=>$('#panel').classList.toggle('open');
+if('serviceWorker' in navigator){
+  window.addEventListener('load', async()=>{
+    try{
+      const reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
+      await reg.update();
+      let refreshing=false;
+      navigator.serviceWorker.addEventListener('controllerchange',()=>{
+        if(refreshing) return; refreshing=true; location.reload();
+      });
+    }catch(e){ console.warn('Service Worker update failed',e); }
+  });
+}

@@ -1,1 +1,36 @@
-const CACHE='cadastral-v8-20260921';self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./','./index.html','./style.css','./app.js','./manifest.json']))) });self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{let x=r.clone();caches.open(CACHE).then(c=>c.put(e.request,x));return r}).catch(()=>caches.match(e.request))) });
+const CACHE = 'cadastral-v9-20260921';
+const CORE = ['./style.css','./app.js','./manifest.json'];
+self.addEventListener('install', event => {
+  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
+});
+self.addEventListener('activate', event => {
+  event.waitUntil((async()=>{
+    const keys=await caches.keys();
+    await Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)));
+    await self.clients.claim();
+  })());
+});
+self.addEventListener('fetch', event => {
+  if(event.request.method !== 'GET') return;
+  const req=event.request;
+  const url=new URL(req.url);
+  // Navigation and program files: network first, so GitHub updates appear immediately.
+  if(req.mode==='navigate' || /\/(index\.html|app\.js|style\.css|manifest\.json|sw\.js)$/.test(url.pathname)){
+    event.respondWith((async()=>{
+      try{
+        const fresh=await fetch(req,{cache:'no-store'});
+        if(fresh.ok){ const c=await caches.open(CACHE); c.put(req,fresh.clone()); }
+        return fresh;
+      }catch(e){ return (await caches.match(req)) || (await caches.match('./index.html')); }
+    })());
+    return;
+  }
+  event.respondWith((async()=>{
+    const cached=await caches.match(req);
+    if(cached) return cached;
+    const fresh=await fetch(req);
+    if(fresh.ok && url.origin===location.origin){ const c=await caches.open(CACHE); c.put(req,fresh.clone()); }
+    return fresh;
+  })());
+});
