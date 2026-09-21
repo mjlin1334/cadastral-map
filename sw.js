@@ -1,4 +1,4 @@
-const CACHE='cadastral-v11-20260921';
+const CACHE='cadastral-v12-20260921';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil((async()=>{for(const k of await caches.keys())if(k!==CACHE)await caches.delete(k);await self.clients.claim();})());});
 self.addEventListener('fetch',e=>{

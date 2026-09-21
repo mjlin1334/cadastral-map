@@ -2,3 +2,25 @@
 @media(max-width:720px){header{height:58px;padding:8px 12px}header b{font-size:18px}#panelBtn{display:block;width:auto;background:#fff;color:#17324d;padding:7px 10px}main{height:calc(100% - 58px)}aside{position:absolute;z-index:1001;left:-92%;width:88%;height:calc(100% - 58px);transition:.2s;box-shadow:3px 0 12px #0002}aside.open{left:0}#map{width:100%}}
 
 .copyright{text-align:center;font-size:12px;line-height:1.7;color:#607080;padding:12px 8px;margin-top:14px;border-top:1px solid #dce3e9;background:transparent;border-left:0;border-right:0;border-bottom:0;border-radius:0}.copyright strong{display:block;color:#17324d;font-size:13px}
+/* v12: Leaflet basemap radio alignment */
+.leaflet-control-layers-base label{
+  display:block;
+  margin:0;
+}
+.leaflet-control-layers-base label > span{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-height:28px;
+  white-space:nowrap;
+}
+.leaflet-control-layers-base input[type="radio"]{
+  width:auto;
+  margin:0;
+  padding:0;
+  flex:0 0 auto;
+}
+.leaflet-control-layers-base label > span > span{
+  display:inline-block;
+  line-height:1.2;
+}
