@@ -5,7 +5,7 @@ const aerial=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/W
 const nlscPhoto=L.tileLayer('https://wmts.nlsc.gov.tw/wmts/PHOTO2/default/GoogleMapsCompatible/{z}/{y}/{x}',{maxZoom:19,attribution:'國土測繪中心'});
 const nlscLabels=L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP2/default/GoogleMapsCompatible/{z}/{y}/{x}.png',{maxZoom:19,attribution:'國土測繪中心'});
 const nlscHybrid=L.layerGroup([nlscPhoto,nlscLabels]);
-L.control.layers({'電子地圖':street,'航照影像':aerial,'國土測繪航照混合（含路名）':nlscHybrid},null,{position:'topright'}).addTo(map);
+L.control.layers({'電子地圖':street,'航照影像':aerial,'航照圖混合':nlscHybrid},null,{position:'topright'}).addTo(map);
 let parcelLayer=null,redLayer=null,yellowLayer=null,parcelGeo=null,sectionField='',parcelField='',selected=null;
 const rawFiles={parcel:null,red:null,yellow:null};
 const styles={parcel:{color:'#1976d2',weight:1.5,fillOpacity:.06},red:{color:'#e53935',weight:4,fillOpacity:0},yellow:{color:'#f2b705',weight:4,fillOpacity:0},selected:{color:'#ff3d00',weight:4,fillColor:'#ff9800',fillOpacity:.25}};
